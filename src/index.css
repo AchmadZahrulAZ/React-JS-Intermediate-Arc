@@ -1,0 +1,15 @@
+.bg-cstm {
+  background-color: #212737;
+  color: white;
+}
+
+.color-cstm {
+  color: #FF6B01;
+}
+
+.orange-line {
+  height: 2px; /* Ketebalan garis */
+  background-color: #663920; /* Warna garis */
+  width: 100%; /* Panjang garis */
+  margin: 1rem 0; /* Spasi di sekitar garis */
+}
