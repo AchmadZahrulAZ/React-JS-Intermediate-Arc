@@ -1,100 +1,143 @@
-import React, { Component } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import ChatInput from "../components/ChatInput";
 import ChatMessage from "../components/ChatMessage";
 import Navbar from "../components/Navbar";
 import Load from "../components/Load";
 import { queryAI, logout } from "../utils/api";
 
-export default class ChatContainer extends Component {
-  state = {
-    messages: [],
-    loading: false,
-    error: null,
-    query: "",
-  };
+const ChatContainer = ({ token, setToken }) => {
+  // state = {
+  //   messages: [],
+  //   loading: false,
+  //   error: null,
+  //   query: "",
+  // };
+  const [messages, setMessages] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [query, setQuery] = useState("");
 
-  endOfMessagesRef = React.createRef();
+  // endOfMessagesRef = React.createRef();
+  const endOfMessagesRef = useRef(null);
 
-  handleQuery = (e) => {
+  // scrollToBottom = () => {
+  //   this.endOfMessagesRef.current.scrollIntoView({ behavior: "smooth" });
+  // };
+  const scrollToBottom = () => {
+    endOfMessagesRef.current.scrollIntoView({ behavior: "smooth" });
+  }
+
+  // handleQuery = (e) => {
+  //   e.preventDefault();
+  //   this.scrollToBottom();
+  //   const { query } = this.state;
+  //   this.setState({ loading: true, error: null });
+  //   queryAI({ query }, this.props.token)
+  //     .then((res) => {
+  //       this.setState({
+  //         messages: [...this.state.messages, { query, data: res }],
+  //         query: "",
+  //       });
+  //     })
+  //     .catch((err) => {
+  //       this.setState({ error: err.message });
+  //     })
+  //     .finally(() => {
+  //       this.setState({ loading: false });
+  //     });
+  // };
+
+  const handleQuery = async (e) => {
     e.preventDefault();
-    this.scrollToBottom();
-    const { query } = this.state;
-    this.setState({ loading: true, error: null });
+    scrollToBottom();
+    setLoading(true);
+    setError(null);
 
-    queryAI({ query }, this.props.token)
-      .then((res) => {
-        this.setState({
-          messages: [...this.state.messages, { query, data: res }],
-          query: "",
-        });
-      })
-      .catch((err) => {
-        this.setState({ error: err.message });
-      })
-      .finally(() => {
-        this.setState({ loading: false });
-      });
+    try {
+      const res = await queryAI({ query }, token);
+      setMessages([...messages, { query, data: res }]);
+      setQuery("");
+    } catch(err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    };
+  };
+  // handleChange = (e) => {
+  //   this.setState({ query: e.target.value });
+  // };
+  const handleChange = (e) => {
+    setQuery(e.target.value);
   };
 
-  handleChange = (e) => {
-    this.setState({ query: e.target.value });
-  };
+  // // Lifecycle method untuk scroll otomatis ke bawah saat ada pesan baru
+  // componentDidUpdate(prevProps, prevState) {
+  //   if (prevState.messages !== this.state.messages) {
+  //     this.scrollToBottom();
+  //   }
+  // }
 
-  // Lifecycle method untuk scroll otomatis ke bawah saat ada pesan baru
-  componentDidUpdate(prevProps, prevState) {
-    if (prevState.messages !== this.state.messages) {
-      this.scrollToBottom();
+  // handleLogout = () => {
+  //   this.setState({ loading: true });
+  //   logout(this.props.token)
+  //     .then(() => {
+  //       this.props.setToken(null);
+  //       localStorage.removeItem("token");
+  //     })
+  //     .catch((err) => {
+  //       console.log(err);
+  //     })
+  //     .finally(() => {
+  //       this.setState({ loading: false });
+  //     });
+  // };
+
+  const handleLogout = async () => {
+    setLoading(true);
+    try {
+      await logout(token);
+      setToken(null);
+      localStorage.removeItem("token");
+    } catch (err) {
+      console.log(err);
+    } finally {
+      setLoading(false);
     }
   }
 
-  scrollToBottom = () => {
-    this.endOfMessagesRef.current.scrollIntoView({ behavior: "smooth" });
-  };
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
-  handleLogout = () => {
-    this.setState({ loading: true });
-    logout(this.props.token)
-      .then(() => {
-        this.props.setToken(null);
-        localStorage.removeItem("token");
-      })
-      .catch((err) => {
-        console.log(err);
-      })
-      .finally(() => {
-        this.setState({ loading: false });
-      });
-  };
-
-  render() {
-    return (
+  return (
       <div>
-        <Navbar logout={this.handleLogout} loading={this.state.loading} />
+        <Navbar logout={handleLogout} loading={loading} />
         <div className="container">
-          {this.state.loading && this.state.messages.length === 0 ? (
+          {loading && messages.length === 0 ? (
             <Load />
           ) : (
-            this.state.messages.map((message, index) => (
+            messages.map((message, index) => (
               <ChatMessage
                 key={index}
                 message={message.data.data}
                 query={message.query}
-                isLoading={this.state.loading}
-                lastArray={index === this.state.messages.length - 1}
-                currentQuery={this.state.query}
+                isLoading={loading}
+                lastArray={index === messages.length - 1}
+                currentQuery={query}
               />
             ))
           )}
           {/* Elemen referensi untuk scroll otomatis */}
-          <div ref={this.endOfMessagesRef} />
+          <div ref={endOfMessagesRef} />
         </div>
         <ChatInput
-          onSubmit={this.handleQuery}
-          onChange={this.handleChange}
-          loading={this.state.loading}
-          query={this.state.query}
+          onSubmit={handleQuery}
+          onChange={handleChange}
+          loading={loading}
+          query={query}
         />
       </div>
     );
-  }
-}
+  };
+
+export default ChatContainer;
