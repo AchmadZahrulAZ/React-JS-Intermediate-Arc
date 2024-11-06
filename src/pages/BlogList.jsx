@@ -1,35 +1,44 @@
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import React, { useState } from 'react';
+import { Link } from "react-router-dom";
+// import useFetch
+import useFetch from "../hooks/useFetch";
 
 const BlogList = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
+  const [currentPage, setCurrentPage] = useState(1); // State untuk halaman saat ini
+  const postsPerPage = 6; // Jumlah item per halaman
 
-  // Get the current page from the query parameter or default to 1
-  const queryParams = new URLSearchParams(location.search);
-  const initialPage = parseInt(queryParams.get("page")) || 1;
+  // Mengambil data dari API Custom Hook useFetch
+  const { isLoading, apiData: posts, serverError } = useFetch("http://localhost:3000/posts", {
+    // parameter query halaman
+    _page: currentPage,
+    _limit: postsPerPage,
+  });
 
-  // Get the posts from the JSON server
-  const [posts, setPosts] = useState([
-    {
-      id: "what-is-react",
-      title: "What is React?",
-      desc: "React is a JavaScript library for building user interfaces.",
-      content:
-        "<h2>Introduction</h2><p>React is a popular JavaScript library for building interactive UIs and complex single-page applications.</p><h3>Features</h3><ul><li>Component-based architecture</li><li>Efficient DOM updates</li><li>Flexibility and extensive ecosystem</li></ul><p>Overall, React makes it simple to build dynamic web applications.</p>",
-      img: "https://loremflickr.com/1280/720",
-    },
-  ]);
+  if (isLoading) return <p>Loading...</p>;
+  if (serverError) return <p>Error: {serverError.message}</p>;
+
+  // Mengubah halaman ke halaman berikutnya
+  const handleNextPage = () => {
+    setCurrentPage((prevPage) => prevPage + 1);
+  };
+
+  // Mengubah halaman ke halaman sebelumnya
+  const handlePreviousPage = () => {
+    // Menurunkan halaman satu tingkat, namun tidak bisa lebih kecil dari halaman 1
+    setCurrentPage((prevPage) => Math.max(prevPage - 1, 1));
+  };
 
   return (
     <div className="container my-5">
       <h1 className="text-center mb-4">Blog Posts</h1>
       <section className="row">
-        {posts.map((post) => (
+      {/* Jika data posts ada, lakukan map untuk setiap post */}
+        {posts && posts.map((post) => (
           <div className="col-md-6 col-lg-4 mb-4" key={post.id}>
             <Link to={`/post/${post.id}`} className="text-decoration-none">
               <div className="card h-100 shadow-sm">
                 <img
-                  src={post.image}
+                  src={post.img}
                   className="card-img-top img-cstm"
                   alt={post.title}
                 />
@@ -42,16 +51,19 @@ const BlogList = () => {
           </div>
         ))}
       </section>
-      <div className="d-flex justify-content-center mt-4">
+
+      {/* Tombol Pagination */}
+      <div className="d-flex justify-content-between mt-4">
         <button
-          className="btn btn-outline-primary me-2"
+          className="btn btn-primary"
+          onClick={handlePreviousPage}
+          // Menonaktifkan tombol Previous jika sudah di halaman pertama
+          disabled={currentPage === 1}
         >
-          <i className="bi bi-arrow-left"></i> Previous
+          Previous
         </button>
-        <button
-          className="btn btn-outline-primary"
-        >
-          Next <i className="bi bi-arrow-right"></i>
+        <button className="btn btn-primary" onClick={handleNextPage}>
+          Next
         </button>
       </div>
     </div>

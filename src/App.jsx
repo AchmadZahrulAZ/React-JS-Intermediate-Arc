@@ -1,16 +1,20 @@
-import React from "react";
-import BlogList from "./pages/BlogList";
-import BlogDetail from "./pages/BlogDetail";
-import Navbar from "./components/Navbar";
+import React from 'react';
+// import untuk kebutuhan routing
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import BlogList from './pages/BlogList';
+import BlogDetail from './pages/BlogDetail';
+import Navbar from './components/Navbar';
 
 class App extends React.Component {
   render() {
     return (
-      <>
+      <Router>
         <Navbar />
-        <BlogList />
-        <BlogDetail />
-      </>
+        <Routes>         
+          <Route path="/" element={<BlogList />} />
+          <Route path="/post/:id" element={<BlogDetail />} />
+        </Routes>
+      </Router>
     );
   }
 }
