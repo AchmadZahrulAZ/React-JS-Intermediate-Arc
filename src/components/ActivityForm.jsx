@@ -1,7 +1,9 @@
 import React, { useState } from "react";
 import { Modal, Button } from "react-bootstrap";
+import axios from "axios";
+import Swal from "sweetalert2";
 
-const ActivityForm = ({ showModal, setShowModal }) => {
+const ActivityForm = ({ showModal, setShowModal, fetchActivities }) => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
 
@@ -11,13 +13,25 @@ const ActivityForm = ({ showModal, setShowModal }) => {
     setDescription("");
   };
 
+  const handleAddActivity = async (e) => {
+    e.preventDefault();
+    try {
+      await axios.post("http://localhost:3000/activities", { title, description });
+      Swal.fire("Success", "Activity added successfully!", "success");
+      fetchActivities(); // Fetch updated activities
+      handleClose();
+    } catch (error) {
+      Swal.fire("Error", "Failed to add activity", "error");
+    }
+  };
+
   return (
     <Modal show={showModal} onHide={handleClose} centered>
       <Modal.Header closeButton>
         <Modal.Title>Add Activity</Modal.Title>
       </Modal.Header>
       <Modal.Body>
-        <form>
+        <form onSubmit={handleAddActivity}>
           <div className="mb-3">
             <label htmlFor="title" className="form-label">
               Title
@@ -42,7 +56,7 @@ const ActivityForm = ({ showModal, setShowModal }) => {
               onChange={(e) => setDescription(e.target.value)}
             ></textarea>
           </div>
-          <Button variant="primary" onClick={handleClose}>
+          <Button variant="primary" type="submit">
             Add
           </Button>
         </form>
